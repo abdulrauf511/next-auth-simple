@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import PublicRoute from "../components/PublicRoute";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
@@ -11,28 +10,30 @@ import Alert from "../components/ui/Alert";
 import { useAuth } from "../store/AuthContext";
 import { validateEmail, validatePassword } from "../utils/validators";
 
-function LoginForm() {
+export default function RegisterPage() {
   const router = useRouter();
-  const params = useSearchParams(); // ✅ now safely inside Suspense
-  const { login, isLoading } = useAuth();
+  const { register, isLoading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+  const [ok, setOk] = useState("");
 
   async function onSubmit(e) {
     e.preventDefault();
     setErr("");
+    setOk("");
 
     if (!validateEmail(email)) return setErr("Enter a valid email");
     if (!validatePassword(password))
       return setErr("Password must be at least 6 characters");
 
     try {
-      await login({ email, password });
-      router.replace(params.get("next") || "/home");
+      await register({ email, password });
+      setOk("Account created. Please login.");
+      router.replace("/login");
     } catch (e) {
-      setErr(e?.message || "Login failed");
+      setErr(e.message || "Register failed");
     }
   }
 
@@ -40,12 +41,17 @@ function LoginForm() {
     <PublicRoute>
       <div className="min-h-screen grid place-items-center px-4">
         <Card className="w-full max-w-sm">
-          <h1 className="text-2xl font-semibold">Login</h1>
-          <p className="mt-1 text-sm text-white/60">Access your account.</p>
+          <h1 className="text-2xl font-semibold">Create account</h1>
+          <p className="mt-1 text-sm text-white/60">Register then login.</p>
 
           {err && (
             <div className="mt-4">
               <Alert>{err}</Alert>
+            </div>
+          )}
+          {ok && (
+            <div className="mt-4 rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-300">
+              {ok}
             </div>
           )}
 
@@ -63,28 +69,18 @@ function LoginForm() {
             />
 
             <Button className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading ? "Creating..." : "Register"}
             </Button>
           </form>
 
-          <div className="mt-4 flex justify-between text-sm text-white/60">
-            <a className="underline" href="/forgot-password">
-              Forgot password?
+          <p className="mt-4 text-sm text-white/60">
+            Already have an account?{" "}
+            <a className="underline" href="/login">
+              Login
             </a>
-            <a className="underline" href="/register">
-              Register
-            </a>
-          </div>
+          </p>
         </Card>
       </div>
     </PublicRoute>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={null}>
-      <LoginForm />
-    </Suspense>
   );
 }
